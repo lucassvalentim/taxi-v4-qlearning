@@ -10,31 +10,36 @@ def set_seed(seed):
     np.random.seed(seed)
     random.seed(seed)
 
-def train():
-    set_seed(CONFIG["seed"])
+def train(config_override=None):
+    # Merge default config with overrides
+    current_config = CONFIG.copy()
+    if config_override:
+        current_config.update(config_override)
+
+    set_seed(current_config["seed"])
     env = gym.make("Taxi-v4")
     
     agent = QLearningAgent(
         state_size=env.observation_space.n,
         action_size=env.action_space.n,
-        alpha=CONFIG["alpha"],
-        gamma=CONFIG["gamma"],
-        epsilon=CONFIG["epsilon_start"],
-        epsilon_min=CONFIG["epsilon_min"],
-        epsilon_decay=CONFIG["epsilon_decay"]
+        alpha=current_config["alpha"],
+        gamma=current_config["gamma"],
+        epsilon=current_config["epsilon_start"],
+        epsilon_min=current_config["epsilon_min"],
+        epsilon_decay=current_config["epsilon_decay"]
     )
     
-    training_data = [] # Para armazenar o espectro completo do treino
+    training_data = []
     
-    print("Iniciando Treinamento...")
-    for episode in range(CONFIG["train_episodes"]):
-        state, _ = env.reset(seed=CONFIG["seed"] + episode)
+    print(f"Iniciando Treinamento (Alpha={current_config['alpha']}, Gamma={current_config['gamma']})...")
+    for episode in range(current_config["train_episodes"]):
+        state, _ = env.reset(seed=current_config["seed"] + episode)
         total_reward = 0
         penalties = 0
         done = False
         steps = 0
         
-        while not done and steps < CONFIG["max_steps_per_episode"]:
+        while not done and steps < current_config["max_steps_per_episode"]:
             action = agent.choose_action(state, explore=True)
             next_state, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
@@ -50,7 +55,6 @@ def train():
             
         agent.update_epsilon()
         
-        # Coleta os dados do episódio
         training_data.append({
             "episode": episode,
             "total_reward": total_reward,
@@ -59,19 +63,16 @@ def train():
             "epsilon": agent.epsilon
         })
         
-        if (episode + 1) % 5000 == 0:
-            print(f"Episódio: {episode + 1} | Epsilon: {agent.epsilon:.4f} | Recompensa Média (últimos 100): {np.mean([d['total_reward'] for d in training_data[-100:]]):.2f}")
+        if (episode + 1) % 10000 == 0:
+            print(f"Episódio: {episode + 1} | Recompensa Média (últimos 100): {np.mean([d['total_reward'] for d in training_data[-100:]]):.2f}")
 
-    # Persistência
-    os.makedirs(os.path.dirname(CONFIG["model_path"]), exist_ok=True)
-    agent.save(CONFIG["model_path"])
+    # Persistência (opcional, pode ser suprimida se estivermos apenas comparando)
+    if current_config.get("model_path"):
+        os.makedirs(os.path.dirname(current_config["model_path"]), exist_ok=True)
+        agent.save(current_config["model_path"])
     
-    os.makedirs(CONFIG["results_dir"], exist_ok=True)
-    df_metrics = pd.DataFrame(training_data)
-    df_metrics.to_csv(os.path.join(CONFIG["results_dir"], "training_metrics.csv"), index=False)
-    
-    print("Treinamento concluído. Tabela Q e métricas salvas.")
     env.close()
+    return pd.DataFrame(training_data)
 
 if __name__ == "__main__":
     train()
