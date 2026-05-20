@@ -96,9 +96,38 @@ def plot_dual_axis(df, x, y1, y2, title, xlabel, y1label, y2label, output_path, 
     fig.tight_layout()
     ax1.grid(True, linestyle='--', alpha=0.3)
     
+def plot_robustness(data_list, x, y, title, xlabel, ylabel, output_path, window=1000):
+    """
+    Plots the mean and standard deviation (shaded) of multiple training runs.
+    data_list: List of DataFrames from different runs.
+    """
+    # Combine all dataframes
+    all_data = pd.concat(data_list)
+    
+    # Calculate moving average for each run individually first to preserve smoothing
+    processed_data = []
+    for i, df in enumerate(data_list):
+        df_copy = df.copy()
+        df_copy['moving_avg'] = df_copy[y].rolling(window=window).mean()
+        df_copy['run_id'] = i
+        processed_data.append(df_copy)
+    
+    combined_processed = pd.concat(processed_data).reset_index(drop=True)
+    
+    plt.figure(figsize=(12, 6))
+    
+    # Use seaborn to plot line with confidence interval (std)
+    sns.lineplot(x=x, y='moving_avg', data=combined_processed, errorbar='sd', linewidth=2, label='Mean Reward (± Std)')
+    
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.legend()
+    
     if output_path:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         plt.savefig(output_path)
-        print(f"Dual-axis plot saved to: {output_path}")
+        print(f"Robustness plot saved to: {output_path}")
         
     plt.close()
