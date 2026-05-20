@@ -68,9 +68,37 @@ def plot_comparison(results_dict, x, y, title, xlabel, ylabel, output_path, wind
     plt.grid(True, linestyle='--', alpha=0.7)
     plt.legend()
     
+def plot_dual_axis(df, x, y1, y2, title, xlabel, y1label, y2label, output_path, window=1000):
+    """
+    Plots two metrics with different Y-axes (e.g., Reward and Epsilon).
+    """
+    fig, ax1 = plt.subplots(figsize=(12, 6))
+
+    # First axis (Reward)
+    color1 = 'tab:blue'
+    ax1.set_xlabel(xlabel)
+    ax1.set_ylabel(y1label, color=color1)
+    
+    # Moving average for y1
+    df_copy = df.copy()
+    df_copy['y1_moving_avg'] = df_copy[y1].rolling(window=window).mean()
+    sns.lineplot(x=x, y='y1_moving_avg', data=df_copy, ax=ax1, color=color1, label=y1label)
+    ax1.tick_params(axis='y', labelcolor=color1)
+
+    # Second axis (Epsilon)
+    ax2 = ax1.twinx()
+    color2 = 'tab:red'
+    ax2.set_ylabel(y2label, color=color2)
+    sns.lineplot(x=x, y=y2, data=df, ax=ax2, color=color2, label=y2label, linestyle='--')
+    ax2.tick_params(axis='y', labelcolor=color2)
+
+    plt.title(title)
+    fig.tight_layout()
+    ax1.grid(True, linestyle='--', alpha=0.3)
+    
     if output_path:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         plt.savefig(output_path)
-        print(f"Comparison plot saved to: {output_path}")
+        print(f"Dual-axis plot saved to: {output_path}")
         
     plt.close()
