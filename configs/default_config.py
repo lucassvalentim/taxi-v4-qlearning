@@ -3,7 +3,7 @@ import os
 CONFIG = {
     # Hiperparâmetros do Q-Learning
     "alpha": 0.1,                # Taxa de aprendizado
-    "gamma": 0.6,                # Fator de desconto
+    "gamma": 0.99,                # Fator de desconto
     "epsilon_start": 1.0,        # Exploração inicial (100% aleatório)
     "epsilon_min": 0.01,         # Exploração mínima
     "epsilon_decay": 0.001,      # Taxa de decaimento do epsilon por episódio

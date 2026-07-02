@@ -8,19 +8,37 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from utils.plotter import plot_learning_curve
 
 def run_analysis():
-    # Caminho para as métricas de treino
-    metrics_path = "results/training_metrics.csv"
-    output_image = "output/learning_curve.png"
+    # Caminhos para as métricas individuais de treino
+    q_learning_path = "results/q_learning_training.csv"
+    sarsa_path = "results/sarsa_training.csv"
     
-    if not os.path.exists(metrics_path):
-        print(f"Error: {metrics_path} not found. Please run train.py first.")
+    # Caminho de saída da imagem comparativa
+    output_image = "output/comparison_learning_curve.png"
+    
+    data_to_compare = {}
+    
+    # Carrega dados do Q-Learning se existirem
+    if os.path.exists(q_learning_path):
+        print(f"Carregando métricas de: {q_learning_path}")
+        data_to_compare["Q-Learning"] = pd.read_csv(q_learning_path)
+    else:
+        print(f"Aviso: {q_learning_path} não encontrado.")
+        
+    # Carrega dados do SARSA se existirem
+    if os.path.exists(sarsa_path):
+        print(f"Carregando métricas de: {sarsa_path}")
+        data_to_compare["SARSA"] = pd.read_csv(sarsa_path)
+    else:
+        print(f"Aviso: {sarsa_path} não encontrado.")
+        
+    # Interrompe se não houver dados
+    if not data_to_compare:
+        print("Erro: Nenhum arquivo de métricas encontrado em results/. Execute o treinamento primeiro.")
         return
     
-    print(f"Loading metrics from {metrics_path}...")
-    df = pd.read_csv(metrics_path)
-    
-    print("Generating learning curve plot...")
-    plot_learning_curve(df, window=1000, output_path=output_image)
+    print("\nGenerating comparative learning curve plot...")
+    # Usando janela 1000 para suavizar o ruído característico do Taxi-v4
+    plot_learning_curve(data_to_compare, window=1000, output_path=output_image)
     
     print("Analysis complete.")
 

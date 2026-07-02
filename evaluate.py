@@ -6,7 +6,7 @@ from agent.q_learning import QLearningAgent
 def evaluate():
     env = gym.make("Taxi-v4")
     agent = QLearningAgent(env.observation_space.n, env.action_space.n, 0, 0)
-    agent.load(CONFIG["model_path"])
+    agent.load('models/q_table_sarsa.npy')
     
     eval_data = []
     
